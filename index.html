@@ -669,62 +669,87 @@ let bgmGain = null;
 let soundEnabled = true;
 
 function initAudio(){
-  if(!audioCtx) audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+  try{
+    if(!audioCtx){
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioContext();
+    }
+    if(audioCtx && audioCtx.state === 'suspended'){
+      audioCtx.resume();
+    }
+  }catch(e){
+    console.error('Audio init error:', e);
+  }
 }
 
 function playSound(freq, duration, type='sine'){
-  if(!soundEnabled || !audioCtx) return;
-  const now = audioCtx.currentTime;
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.type = type;
-  osc.frequency.value = freq;
-  gain.gain.setValueAtTime(0.1, now);
-  gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
-  osc.start(now);
-  osc.stop(now + duration);
+  if(!soundEnabled) return;
+  try{
+    initAudio();
+    if(!audioCtx) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+    osc.start(now);
+    osc.stop(now + duration);
+  }catch(e){
+    console.error('Play sound error:', e);
+  }
 }
 
 function startBGM(){
-  if(!soundEnabled || !audioCtx) return;
-  if(bgmOscillator) stopBGM();
-  const now = audioCtx.currentTime;
-  bgmOscillator = audioCtx.createOscillator();
-  bgmGain = audioCtx.createGain();
-  bgmOscillator.connect(bgmGain);
-  bgmGain.connect(audioCtx.destination);
-  bgmOscillator.type = 'square';
-  bgmGain.gain.value = 0.05;
-  // ゲームボーイ風パターン（簡易）
-  let freq = 330;
-  let t = now;
-  const pattern = [330, 330, 330, 330, 330, 330, 330, 330, 262, 262, 262, 262, 262, 262, 262, 262];
-  bgmOscillator.frequency.setValueAtTime(pattern[0], t);
-  for(let i=1; i<256; i++){
-    t += 0.1;
-    bgmOscillator.frequency.setValueAtTime(pattern[i % pattern.length], t);
+  if(!soundEnabled) return;
+  try{
+    initAudio();
+    if(!audioCtx) return;
+    if(bgmOscillator) stopBGM();
+    const now = audioCtx.currentTime;
+    bgmOscillator = audioCtx.createOscillator();
+    bgmGain = audioCtx.createGain();
+    bgmOscillator.connect(bgmGain);
+    bgmGain.connect(audioCtx.destination);
+    bgmOscillator.type = 'square';
+    bgmGain.gain.value = 0.08;
+
+    // ゲームボーイ風パターン
+    const pattern = [330, 330, 330, 330, 262, 262, 262, 262,
+                     294, 294, 294, 294, 247, 247, 247, 247];
+    let t = now;
+    bgmOscillator.frequency.setValueAtTime(pattern[0], t);
+    for(let i=1; i<256; i++){
+      t += 0.08;
+      bgmOscillator.frequency.setValueAtTime(pattern[i % pattern.length], t);
+    }
+    bgmOscillator.start(now);
+  }catch(e){
+    console.error('BGM error:', e);
   }
-  bgmOscillator.start(now);
 }
 
 function stopBGM(){
-  if(bgmOscillator){
-    bgmOscillator.stop();
-    bgmOscillator = null;
-    bgmGain = null;
+  try{
+    if(bgmOscillator){
+      bgmOscillator.stop();
+      bgmOscillator = null;
+      bgmGain = null;
+    }
+  }catch(e){
+    console.error('Stop BGM error:', e);
   }
 }
 
 function playCorrect(){
-  initAudio();
   playSound(800, 0.2);
-  playSound(1000, 0.15);
+  setTimeout(()=>playSound(1000, 0.15), 100);
 }
 
 function playWrong(){
-  initAudio();
   playSound(300, 0.3);
 }
 
