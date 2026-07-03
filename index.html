@@ -209,7 +209,12 @@ body{font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;backgroun
     <span class="streak-info" id="streakInfo">🌅 今日の学習を始めよう！</span>
     <span class="daily-prog" id="dailyProg">0/10問</span>
   </div>
-  <div class="sec-title">⚔️ クエスト選択</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px 8px">
+    <div class="sec-title">⚔️ クエスト選択</div>
+    <button onclick="toggleSound()" style="background:none;border:none;font-size:20px;cursor:pointer;padding:0">
+      <span id="soundIcon">🔊</span>
+    </button>
+  </div>
   <div class="quest-list">
     <div class="quest-card" onclick="startQuest('daily')">
       <div class="q-icon">🌟</div>
@@ -655,6 +660,74 @@ function shuffle(arr){
 }
 
 // ===========================
+// AUDIO SYSTEM
+// ===========================
+let audioCtx = null;
+let bgmOscillator = null;
+let bgmGain = null;
+let soundEnabled = true;
+
+function initAudio(){
+  if(!audioCtx) audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+}
+
+function playSound(freq, duration, type='sine'){
+  if(!soundEnabled || !audioCtx) return;
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.1, now);
+  gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+  osc.start(now);
+  osc.stop(now + duration);
+}
+
+function startBGM(){
+  if(!soundEnabled || !audioCtx) return;
+  if(bgmOscillator) stopBGM();
+  const now = audioCtx.currentTime;
+  bgmOscillator = audioCtx.createOscillator();
+  bgmGain = audioCtx.createGain();
+  bgmOscillator.connect(bgmGain);
+  bgmGain.connect(audioCtx.destination);
+  bgmOscillator.type = 'square';
+  bgmGain.gain.value = 0.05;
+  // ゲームボーイ風パターン（簡易）
+  let freq = 330;
+  let t = now;
+  const pattern = [330, 330, 330, 330, 330, 330, 330, 330, 262, 262, 262, 262, 262, 262, 262, 262];
+  bgmOscillator.frequency.setValueAtTime(pattern[0], t);
+  for(let i=1; i<256; i++){
+    t += 0.1;
+    bgmOscillator.frequency.setValueAtTime(pattern[i % pattern.length], t);
+  }
+  bgmOscillator.start(now);
+}
+
+function stopBGM(){
+  if(bgmOscillator){
+    bgmOscillator.stop();
+    bgmOscillator = null;
+    bgmGain = null;
+  }
+}
+
+function playCorrect(){
+  initAudio();
+  playSound(800, 0.2);
+  playSound(1000, 0.15);
+}
+
+function playWrong(){
+  initAudio();
+  playSound(300, 0.3);
+}
+
+// ===========================
 // GAME STATE
 // ===========================
 const DEFAULT_STATE = {
@@ -664,11 +737,13 @@ const DEFAULT_STATE = {
   petCount:0, cheerUsed:false, petDate:'',
   studyDays:0, lastSaveDate:'',
   dailyCount:0, dailyDate:'',
+  soundEnabled:true,
 };
 
 let G = loadState();
 let currentQuest = null;
 let battleState = {};
+soundEnabled = G.soundEnabled;
 
 function loadState(){
   try{
