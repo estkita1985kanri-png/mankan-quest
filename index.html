@@ -868,7 +868,9 @@ function startQuest(cat){
   document.getElementById('enemyName').textContent = enemy.name;
   document.getElementById('playerSvgB').innerHTML = STAGES[G.stage].svg;
   document.getElementById('playerNameB').textContent = STAGES[G.stage].name;
+  initAudio();
   showScreen('battle');
+  startBGM();
   renderQuestion();
 }
 
