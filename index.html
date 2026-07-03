@@ -781,6 +781,7 @@ function updateHomeScreen(){
   document.getElementById('lvBadge').textContent = `Lv.${getLevel()}`;
   document.getElementById('stageStars').textContent = s.stars;
   document.getElementById('homeChar').innerHTML = s.svg;
+  document.getElementById('soundIcon').textContent = soundEnabled ? '🔊' : '🔇';
 
   // EXP bar
   const expPrev = G.stage>0 ? getExpThreshold(G.stage-1) : 0;
