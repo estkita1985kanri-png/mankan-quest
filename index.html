@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0a0a1a">
+<title>マン管クエスト</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0a0a1a;--bg2:#12122a;--panel:#1a1a3a;--border:#2a2a5a;
+  --text:#e0e0ff;--muted:#7070aa;--gold:#ffd700;--blue:#64b5f6;
+  --green:#69f0ae;--red:#ff6b6b;--purple:#ce93d8;--orange:#ffb74d;
+  --pink:#f48fb1;
+}
+body{font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:430px;margin:0 auto;overflow-x:hidden;position:relative}
+
+/* SCREENS */
+.screen{display:none;flex-direction:column;min-height:100vh}
+.screen.active{display:flex}
+
+/* ===== HOME SCREEN ===== */
+#home .char-stage{
+  background:linear-gradient(180deg,#0d1b3e 0%,#0a0a1a 100%);
+  padding:20px 16px 12px;text-align:center;position:relative;
+  border-bottom:1px solid var(--border);
+}
+.stage-stars{font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:4px}
+.char-name-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:2px}
+.char-name{font-size:20px;font-weight:bold;color:var(--gold)}
+.lv-badge{background:var(--border);color:var(--blue);font-size:11px;padding:2px 8px;border-radius:99px;font-weight:bold}
+.char-sub{font-size:12px;color:var(--muted);margin-bottom:14px}
+.char-wrap{width:130px;height:130px;margin:0 auto 14px;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.bounce-anim{animation:bounce2 0.5s ease!important}
+@keyframes bounce2{0%,100%{transform:translateY(0) scale(1)}30%{transform:translateY(-20px) scale(1.15)}60%{transform:translateY(-5px) scale(1.05)}}
+.shake-anim{animation:shake 0.4s ease!important}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+
+.exp-area{padding:0 20px 4px}
+.bar-row{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:3px}
+.bar{background:var(--border);border-radius:99px;height:8px;overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;transition:width .6s ease}
+.fill-exp{background:linear-gradient(90deg,#667eea,#764ba2)}
+.fill-hp{background:linear-gradient(90deg,#f7971e,#ffd200)}
+.fill-mood{background:linear-gradient(90deg,#f093fb,#f5576c)}
+
+.mood-strip{display:flex;justify-content:space-around;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--border)}
+.mood-item{text-align:center;flex:1}
+.mood-icon{font-size:20px}
+.mood-label{font-size:9px;color:var(--muted);margin-top:2px}
+.mood-val{font-size:12px;font-weight:bold;color:var(--gold)}
+
+.streak-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg2)}
+.streak-info{font-size:13px;color:var(--orange)}
+.daily-prog{font-size:13px;color:var(--blue)}
+
+.sec-title{font-size:11px;color:var(--muted);letter-spacing:1px;padding:14px 16px 8px;text-transform:uppercase}
+.quest-list{padding:0 12px 80px;display:flex;flex-direction:column;gap:10px}
+.quest-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.quest-card::after{content:'';position:absolute;inset:0;background:white;opacity:0;transition:opacity .1s}
+.quest-card:active::after{opacity:.05}
+.quest-card.locked{opacity:.4}
+.q-icon{font-size:28px;flex-shrink:0;width:40px;text-align:center}
+.q-body{flex:1}
+.q-name{font-size:14px;font-weight:bold;margin-bottom:3px}
+.q-sub{font-size:11px;color:var(--muted)}
+.q-right{text-align:right;flex-shrink:0}
+.q-badge{font-size:18px}
+.q-exp{font-size:10px;color:var(--purple);margin-top:2px}
+.quest-card.done .q-name{color:var(--green)}
+
+/* ===== BATTLE SCREEN ===== */
+#battle{background:linear-gradient(180deg,#0d1530 0%,#0a0a1a 50%,#1a0d2e 100%)}
+.battle-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
+.battle-cat{font-size:12px;background:var(--border);padding:4px 12px;border-radius:99px;color:var(--blue)}
+.battle-q-count{font-size:13px;color:var(--muted)}
+.battle-main{flex:1;padding:14px 14px 0;display:flex;flex-direction:column}
+
+.enemy-row{display:flex;align-items:flex-end;gap:10px;margin-bottom:10px}
+.enemy-svg{width:90px;height:90px;flex-shrink:0;animation:enemyFloat 2s ease-in-out infinite}
+@keyframes enemyFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-6px) rotate(2deg)}}
+.enemy-stats{flex:1}
+.enemy-name{font-size:13px;color:var(--red);font-weight:bold;margin-bottom:4px}
+
+.player-row{display:flex;align-items:flex-end;gap:10px;margin-bottom:14px;flex-direction:row-reverse}
+.player-svg-b{width:70px;height:70px;flex-shrink:0}
+.player-stats{flex:1;text-align:right}
+.player-name-b{font-size:13px;color:var(--blue);font-weight:bold;margin-bottom:4px}
+
+.battle-msg{text-align:center;font-size:15px;font-weight:bold;min-height:32px;margin-bottom:10px;border-radius:8px;padding:4px;animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+.msg-hit{color:var(--green)}
+.msg-miss{color:var(--red)}
+
+.q-box{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:14px;padding:14px 16px;font-size:13px;line-height:1.8;margin-bottom:12px;min-height:72px}
+.choices{display:flex;flex-direction:column;gap:9px;margin-bottom:12px}
+.choice{background:var(--panel);border:1.5px solid var(--border);border-radius:11px;padding:12px 14px;font-size:13px;cursor:pointer;text-align:left;color:var(--text);line-height:1.5;transition:all .2s;width:100%}
+.choice:active{transform:scale(.98)}
+.choice.correct{background:rgba(105,240,174,.15);border-color:var(--green);color:var(--green)}
+.choice.wrong{background:rgba(255,107,107,.15);border-color:var(--red);color:var(--red)}
+.choice.reveal{background:rgba(105,240,174,.08);border-color:var(--green)}
+.choice.disabled{pointer-events:none}
+
+.explain{background:rgba(255,215,0,.08);border-left:3px solid var(--gold);border-radius:0 10px 10px 0;padding:10px 14px;font-size:11px;line-height:1.7;color:var(--muted);margin-bottom:12px;display:none}
+.explain.show{display:block}
+.explain strong{color:var(--gold)}
+
+.next-btn{background:linear-gradient(135deg,#667eea,#764ba2);border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:bold;color:white;cursor:pointer;width:100%;display:none;margin-bottom:8px}
+.next-btn.show{display:block}
+
+/* ===== RESULT SCREEN ===== */
+#result{align-items:center;justify-content:center;padding:24px 20px;text-align:center}
+.result-char{width:140px;height:140px;margin:0 auto 16px;animation:float 3s ease-in-out infinite}
+.result-title{font-size:26px;font-weight:bold;margin-bottom:6px}
+.result-sub{font-size:14px;color:var(--muted);margin-bottom:20px}
+.result-stars{font-size:30px;margin-bottom:20px}
+.result-box{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:20px;width:100%;max-width:320px;margin-bottom:20px}
+.result-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.result-row:last-child{border:none}
+.result-row span:last-child{font-weight:bold;color:var(--gold)}
+.result-actions{display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px}
+.btn-primary{background:linear-gradient(135deg,#667eea,#764ba2);border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:bold;color:white;cursor:pointer;width:100%}
+.btn-secondary{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:14px;color:var(--text);cursor:pointer;width:100%}
+
+/* ===== EVOLUTION SCREEN ===== */
+#evolution{align-items:center;justify-content:center;padding:32px 24px;text-align:center;background:radial-gradient(ellipse at center,#1a1a4e 0%,#000 100%)}
+.evo-particles{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.evo-char{width:180px;height:180px;margin:0 auto 24px;animation:evoAppear 1s cubic-bezier(.34,1.56,.64,1)}
+@keyframes evoAppear{0%{transform:scale(0) rotate(-180deg);opacity:0}60%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}
+.evo-label{font-size:13px;color:var(--muted);margin-bottom:8px;letter-spacing:1px}
+.evo-name{font-size:28px;font-weight:bold;color:var(--gold);margin-bottom:6px}
+.evo-desc{font-size:13px;color:var(--text);margin-bottom:8px;line-height:1.7}
+.evo-bonus{font-size:13px;color:var(--green);margin-bottom:28px}
+.evo-btn{background:linear-gradient(135deg,#f093fb,#f5576c);border:none;border-radius:14px;padding:16px 40px;font-size:16px;font-weight:bold;color:white;cursor:pointer;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(240,147,251,.4)}50%{box-shadow:0 0 0 12px rgba(240,147,251,0)}}
+
+/* ===== CARE SCREEN ===== */
+#care{padding:0 16px 80px}
+.care-char{width:150px;height:150px;margin:24px auto 0;animation:float 3s ease-in-out infinite}
+.speech-bubble{background:white;color:#333;border-radius:18px;padding:14px 20px;font-size:14px;line-height:1.7;margin:16px auto;max-width:280px;text-align:center;position:relative}
+.speech-bubble::after{content:'';position:absolute;top:-12px;left:50%;transform:translateX(-50%);border:6px solid transparent;border-bottom-color:white}
+.care-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.care-btn{background:var(--panel);border:1.5px solid var(--border);border-radius:16px;padding:18px 12px;cursor:pointer;text-align:center;transition:all .2s;color:var(--text)}
+.care-btn:active{transform:scale(.95)}
+.care-icon{font-size:30px;display:block;margin-bottom:6px}
+.care-label{font-size:12px;font-weight:bold;margin-bottom:3px}
+.care-desc{font-size:11px;color:var(--muted)}
+.stats-title{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;padding:14px 0 8px}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
+.stat-val{font-size:20px;font-weight:bold;color:var(--gold)}
+.stat-lbl{font-size:10px;color:var(--muted);margin-top:3px}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--panel);border-top:1px solid var(--border);display:flex;z-index:100}
+.nav-item{flex:1;padding:10px 6px;text-align:center;cursor:pointer;border:none;background:none;color:var(--muted);transition:color .2s}
+.nav-item .ni{font-size:22px;display:block;margin-bottom:2px}
+.nav-item span{font-size:9px;display:block}
+.nav-item.active{color:var(--gold)}
+
+/* NOTIFICATION */
+.toast{position:fixed;top:-50px;left:50%;transform:translateX(-50%);background:var(--green);color:#000;font-weight:bold;font-size:13px;padding:10px 24px;border-radius:99px;z-index:999;transition:top .3s;white-space:nowrap}
+.toast.show{top:16px}
+
+/* PARTICLES */
+.particle{position:fixed;pointer-events:none;font-size:22px;animation:pup 1s ease-out forwards;z-index:9998}
+@keyframes pup{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-120px) scale(.3);opacity:0}}
+
+/* COMBAT HIT FLASH */
+.hit-flash{animation:hitFlash .3s ease}
+@keyframes hitFlash{0%{filter:brightness(1)}50%{filter:brightness(3)}100%{filter:brightness(1)}}
+
+/* HP bar color states */
+.hp-high{background:linear-gradient(90deg,#69f0ae,#00e676)}
+.hp-mid{background:linear-gradient(90deg,#ffeb3b,#ffc107)}
+.hp-low{background:linear-gradient(90deg,#ff6b6b,#f44336)}
+
+/* Scrollable battle area */
+.battle-scroll{flex:1;overflow-y:auto;padding:0 14px 14px}
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- HOME SCREEN -->
+<div class="screen active" id="home">
+  <div class="char-stage">
+    <div class="stage-stars" id="stageStars">★☆☆☆☆☆</div>
+    <div class="char-name-row">
+      <span class="char-name" id="charName">まんたまご</span>
+      <span class="lv-badge" id="lvBadge">Lv.1</span>
+    </div>
+    <div class="char-sub" id="charSub">ひみつのたまご</div>
+    <div class="char-wrap" id="homeChar"></div>
+    <div class="exp-area">
+      <div class="bar-row"><span>EXP</span><span id="expLabel">0 / 100</span></div>
+      <div class="bar"><div class="bar-fill fill-exp" id="expBar" style="width:0%"></div></div>
+    </div>
+  </div>
+  <div class="mood-strip">
+    <div class="mood-item"><div class="mood-icon" id="moodIcon">😊</div><div class="mood-label">きもち</div><div class="mood-val" id="moodVal">ハッピー</div></div>
+    <div class="mood-item"><div class="mood-icon">🔥</div><div class="mood-label">連続日数</div><div class="mood-val" id="streakVal">0日</div></div>
+    <div class="mood-item"><div class="mood-icon">⭐</div><div class="mood-label">正答率</div><div class="mood-val" id="accuracyVal">－</div></div>
+  </div>
+  <div class="streak-bar">
+    <span class="streak-info" id="streakInfo">🌅 今日の学習を始めよう！</span>
+    <span class="daily-prog" id="dailyProg">0/10問</span>
+  </div>
+  <div class="sec-title">⚔️ クエスト選択</div>
+  <div class="quest-list">
+    <div class="quest-card" onclick="startQuest('daily')">
+      <div class="q-icon">🌟</div>
+      <div class="q-body"><div class="q-name">デイリークエスト</div><div class="q-sub">今日の10問にチャレンジ！</div></div>
+      <div class="q-right"><div class="q-badge" id="dailyBadge">▶</div><div class="q-exp">+100 EXP</div></div>
+    </div>
+    <div class="quest-card" onclick="startQuest('kubunshoyu')">
+      <div class="q-icon">⚖️</div>
+      <div class="q-body"><div class="q-name">区分所有法</div><div class="q-sub">ドラゴン法律モンスターを倒せ！</div></div>
+      <div class="q-right"><div class="q-badge">⚔️</div><div class="q-exp">+60 EXP</div></div>
+    </div>
+    <div class="quest-card" onclick="startQuest('kanrikikaku')">
+      <div class="q-icon">📜</div>
+      <div class="q-body"><div class="q-name">標準管理規約</div><div class="q-sub">ルール番人に挑戦！</div></div>
+      <div class="q-right"><div class="q-badge">⚔️</div><div class="q-exp">+60 EXP</div></div>
+    </div>
+    <div class="quest-card" onclick="startQuest('tekisei')">
+      <div class="q-icon">🏛️</div>
+      <div class="q-body"><div class="q-name">管理適正化法</div><div class="q-sub">官僚モンスターを撃破！</div></div>
+      <div class="q-right"><div class="q-badge">⚔️</div><div class="q-exp">+60 EXP</div></div>
+    </div>
+    <div class="quest-card" onclick="startQuest('miho')">
+      <div class="q-icon">🏛️</div>
+      <div class="q-body"><div class="q-name">民法</div><div class="q-sub">天秤モンスターに立ち向かえ！</div></div>
+      <div class="q-right"><div class="q-badge">⚔️</div><div class="q-exp">+60 EXP</div></div>
+    </div>
+    <div class="quest-card" onclick="startQuest('kenchiku')">
+      <div class="q-icon">🔧</div>
+      <div class="q-body"><div class="q-name">建築・設備</div><div class="q-sub">ギアモンスターを制圧！</div></div>
+      <div class="q-right"><div class="q-badge">⚔️</div><div class="q-exp">+60 EXP</div></div>
+    </div>
+    <div class="quest-card" onclick="startQuest('kaikei')">
+      <div class="q-icon">💰</div>
+      <div class="q-body"><div class="q-name">会計・財務</div><div class="q-sub">計算機モンスターを攻略！</div></div>
+      <div class="q-right"><div class="q-badge">⚔️</div><div class="q-exp">+60 EXP</div></div>
+    </div>
+    <div class="quest-card" onclick="startQuest('boss')" style="border-color:#ffd700">
+      <div class="q-icon">🏆</div>
+      <div class="q-body"><div class="q-name">ボスバトル（全範囲）</div><div class="q-sub">20問で実力を試せ！週1チャレンジ</div></div>
+      <div class="q-right"><div class="q-badge">👑</div><div class="q-exp">+200 EXP</div></div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-item active" onclick="showScreen('home')"><span class="ni">🏠</span><span>ホーム</span></button>
+    <button class="nav-item" onclick="showScreen('care')"><span class="ni">💝</span><span>そだてる</span></button>
+    <button class="nav-item" onclick="showAchieve()"><span class="ni">🏅</span><span>実績</span></button>
+  </div>
+</div>
+
+<!-- BATTLE SCREEN -->
+<div class="screen" id="battle">
+  <div class="battle-header">
+    <span class="battle-cat" id="battleCatLabel">区分所有法</span>
+    <span class="battle-q-count" id="battleQCount">1 / 6</span>
+  </div>
+  <div class="battle-scroll">
+    <div class="battle-main">
+      <div class="enemy-row">
+        <div class="enemy-svg" id="enemySvg"></div>
+        <div class="enemy-stats">
+          <div class="enemy-name" id="enemyName">法律ドラゴン</div>
+          <div class="bar-row"><span style="font-size:10px;color:var(--red)">敵HP</span><span id="enemyHpLabel" style="font-size:10px;color:var(--muted)">100/100</span></div>
+          <div class="bar"><div class="bar-fill hp-high" id="enemyHpBar" style="width:100%"></div></div>
+        </div>
+      </div>
+      <div class="player-row">
+        <div class="player-svg-b" id="playerSvgB"></div>
+        <div class="player-stats">
+          <div class="player-name-b" id="playerNameB">まんたまご</div>
+          <div class="bar-row" style="justify-content:flex-end;gap:8px"><span id="playerHpLabel" style="font-size:10px;color:var(--muted)">100/100</span><span style="font-size:10px;color:var(--blue)">HP</span></div>
+          <div class="bar"><div class="bar-fill hp-high" id="playerHpBar" style="width:100%"></div></div>
+        </div>
+      </div>
+      <div class="battle-msg" id="battleMsg"></div>
+      <div class="q-box" id="qBox"></div>
+      <div class="choices" id="choices"></div>
+      <div class="explain" id="explain"></div>
+      <button class="next-btn" id="nextBtn" onclick="nextQuestion()">つぎへ ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT SCREEN -->
+<div class="screen" id="result">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px">
+    <div class="result-char" id="resultChar"></div>
+    <div class="result-title" id="resultTitle">クリア！🎉</div>
+    <div class="result-sub" id="resultSub">すばらしい！</div>
+    <div class="result-stars" id="resultStars">⭐⭐⭐</div>
+    <div class="result-box">
+      <div class="result-row"><span>正解数</span><span id="resCorrect">0 / 0</span></div>
+      <div class="result-row"><span>獲得EXP</span><span id="resExp">+0 EXP</span></div>
+      <div class="result-row"><span>コンボ</span><span id="resCombo">最大 0コンボ</span></div>
+      <div class="result-row"><span>総合正答率</span><span id="resAcc">0%</span></div>
+    </div>
+    <div class="result-actions">
+      <button class="btn-primary" onclick="showScreen('home')">🏠 ホームへ戻る</button>
+      <button class="btn-secondary" id="retryBtn" onclick="retryQuest()">🔄 もう一度</button>
+    </div>
+  </div>
+</div>
+
+<!-- EVOLUTION SCREEN -->
+<div class="screen" id="evolution">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center">
+    <div style="font-size:13px;color:var(--purple);letter-spacing:2px;margin-bottom:16px">✨ しんかした ✨</div>
+    <div class="evo-char" id="evoChar"></div>
+    <div class="evo-label">あたらしいなまえ</div>
+    <div class="evo-name" id="evoName"></div>
+    <div class="evo-desc" id="evoDesc"></div>
+    <div class="evo-bonus" id="evoBonus"></div>
+    <button class="evo-btn" onclick="afterEvolution()">さあ、つぎへ！</button>
+  </div>
+</div>
+
+<!-- CARE SCREEN -->
+<div class="screen" id="care">
+  <div class="battle-header">
+    <span style="font-size:15px;font-weight:bold">💝 そだてる</span>
+    <button onclick="showScreen('home')" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer">✕</button>
+  </div>
+  <div class="care-char" id="careChar"></div>
+  <div class="speech-bubble" id="speechBubble">こんにちは！きょうもいっしょにべんきょうしようね！</div>
+  <div class="care-grid">
+    <div class="care-btn" onclick="careAction('study')"><span class="care-icon">📚</span><div class="care-label">べんきょう</div><div class="care-desc">クエストで EXP ゲット</div></div>
+    <div class="care-btn" onclick="careAction('pet')"><span class="care-icon">✋</span><div class="care-label">なでなで</div><div class="care-desc">きもちが上がる (3回/日)</div></div>
+    <div class="care-btn" onclick="careAction('cheer')"><span class="care-icon">🎵</span><div class="care-label">はげます</div><div class="care-desc">げんき回復 (1回/日)</div></div>
+    <div class="care-btn" onclick="careAction('status')"><span class="care-icon">📊</span><div class="care-label">せいちょう記録</div><div class="care-desc">これまでの実績を確認</div></div>
+  </div>
+  <div class="stats-title">📈 成長記録</div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-val" id="statTotal">0</div><div class="stat-lbl">総回答数</div></div>
+    <div class="stat-card"><div class="stat-val" id="statCorrect">0</div><div class="stat-lbl">正解数</div></div>
+    <div class="stat-card"><div class="stat-val" id="statStreak">0</div><div class="stat-lbl">連続日数</div></div>
+    <div class="stat-card"><div class="stat-val" id="statExp">0</div><div class="stat-lbl">総EXP</div></div>
+    <div class="stat-card"><div class="stat-val" id="statStage">0</div><div class="stat-lbl">進化回数</div></div>
+    <div class="stat-card"><div class="stat-val" id="statDays">0</div><div class="stat-lbl">学習日数</div></div>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-item" onclick="showScreen('home')"><span class="ni">🏠</span><span>ホーム</span></button>
+    <button class="nav-item active" onclick="showScreen('care')"><span class="ni">💝</span><span>そだてる</span></button>
+    <button class="nav-item" onclick="showAchieve()"><span class="ni">🏅</span><span>実績</span></button>
+  </div>
+</div>
+
+<script>
+// ===========================
+// CHARACTER DATA
+// ===========================
+const STAGES = [
+  { name:'まんたまご', sub:'ひみつのたまご', desc:'ちいさなたまごのなかで、すごいチカラがめざめようとしている…', bonus:'孵化への第一歩！', stars:'★☆☆☆☆☆', expNext:100, svg: `<svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="50" cy="65" rx="33" ry="42" fill="#fffde7" stroke="#f9d342" stroke-width="2.5"/>
+    <circle cx="37" cy="55" r="6" fill="#222"/><circle cx="63" cy="55" r="6" fill="#222"/>
+    <circle cx="39" cy="52" r="2.5" fill="white"/><circle cx="65" cy="52" r="2.5" fill="white"/>
+    <path d="M 37 70 Q 50 80 63 70" stroke="#555" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <ellipse cx="30" cy="82" rx="6" ry="4" fill="#f9d342" opacity=".4"/>
+    <ellipse cx="72" cy="74" rx="5" ry="4" fill="#f9d342" opacity=".4"/>
+    <ellipse cx="55" cy="94" rx="4" ry="3" fill="#f9d342" opacity=".4"/>
+  </svg>` },
+  { name:'まんちゃん', sub:'たてものベイビー', desc:'たまごからうまれた！ちいさくてかわいいたてものの子。まいにちべんきょうがだいすき！', bonus:'HP+20・EXP獲得+5%', stars:'★★☆☆☆☆', expNext:300, svg:`<svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="20,42 50,14 80,42" fill="#5c8af7" stroke="#3a6bd4" stroke-width="1.5"/>
+    <rect x="24" y="40" width="52" height="66" rx="8" fill="#7cb3f7" stroke="#5c8af7" stroke-width="2"/>
+    <rect x="31" y="47" width="16" height="16" rx="4" fill="white" stroke="#5c8af7" stroke-width="1.5"/>
+    <rect x="53" y="47" width="16" height="16" rx="4" fill="white" stroke="#5c8af7" stroke-width="1.5"/>
+    <circle cx="39" cy="55" r="5" fill="#222"/><circle cx="61" cy="55" r="5" fill="#222"/>
+    <circle cx="41" cy="53" r="2" fill="white"/><circle cx="63" cy="53" r="2" fill="white"/>
+    <path d="M 36 72 Q 50 82 64 72" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <rect x="40" y="84" width="20" height="22" rx="4" fill="#5c8af7"/>
+    <circle cx="57" cy="95" r="2" fill="#bcd"/>
+    <ellipse cx="34" cy="108" rx="12" ry="5" fill="#5c8af7"/>
+    <ellipse cx="66" cy="108" rx="12" ry="5" fill="#5c8af7"/>
+    <circle cx="50" cy="10" r="4" fill="#ffd700"/>
+  </svg>` },
+  { name:'まんぼう', sub:'すこやかセカンドステージ', desc:'ちょっとおおきくなった！べんきょうのしかたもわかってきた。まんかんしけんにちかづいてる！', bonus:'コンボボーナス+10%', stars:'★★★☆☆☆', expNext:700, svg:`<svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="15,42 50,10 85,42" fill="#4a7ae0" stroke="#2d5cbf" stroke-width="1.5"/>
+    <rect x="20" y="40" width="60" height="70" rx="8" fill="#6899f0" stroke="#4a7ae0" stroke-width="2"/>
+    <rect x="26" y="47" width="18" height="18" rx="5" fill="white" stroke="#4a7ae0" stroke-width="1.5"/>
+    <rect x="56" y="47" width="18" height="18" rx="5" fill="white" stroke="#4a7ae0" stroke-width="1.5"/>
+    <circle cx="35" cy="56" r="6" fill="#111"/><circle cx="65" cy="56" r="6" fill="#111"/>
+    <circle cx="37" cy="54" r="2.5" fill="white"/><circle cx="67" cy="54" r="2.5" fill="white"/>
+    <path d="M 33 74 Q 50 85 67 74" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <rect x="38" y="85" width="24" height="25" rx="4" fill="#4a7ae0"/>
+    <circle cx="59" cy="98" r="2.5" fill="#bcd"/>
+    <rect x="32" y="52" width="6" height="8" rx="2" fill="#ff6b6b" opacity=".5"/>
+    <rect x="62" y="52" width="6" height="8" rx="2" fill="#ff6b6b" opacity=".5"/>
+    <ellipse cx="30" cy="112" rx="13" ry="5" fill="#4a7ae0"/>
+    <ellipse cx="70" cy="112" rx="13" ry="5" fill="#4a7ae0"/>
+    <circle cx="50" cy="6" r="5" fill="#ffd700"/><circle cx="50" cy="6" r="2" fill="#fff"/>
+  </svg>` },
+  { name:'まんたろう', sub:'クリップボードそうし', desc:'クリップボードを手に入れた！理事会の議事録も書けるようになってきた。', bonus:'苦手問題ヒント解除', stars:'★★★★☆☆', expNext:1500, svg:`<svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="12,40 50,8 88,40" fill="#3a5fc4" stroke="#1d3fa0" stroke-width="1.5"/>
+    <rect x="16" y="38" width="68" height="74" rx="8" fill="#5578de" stroke="#3a5fc4" stroke-width="2"/>
+    <rect x="24" y="44" width="20" height="20" rx="5" fill="white" stroke="#3a5fc4" stroke-width="1.5"/>
+    <rect x="56" y="44" width="20" height="20" rx="5" fill="white" stroke="#3a5fc4" stroke-width="1.5"/>
+    <circle cx="34" cy="54" r="7" fill="#111"/><circle cx="66" cy="54" r="7" fill="#111"/>
+    <circle cx="36" cy="51" r="3" fill="white"/><circle cx="68" cy="51" r="3" fill="white"/>
+    <path d="M 32 73 Q 50 84 68 73" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <rect x="36" y="84" width="28" height="28" rx="4" fill="#3a5fc4"/>
+    <rect x="76" y="50" width="16" height="22" rx="3" fill="#fffde7" stroke="#ccc" stroke-width="1"/>
+    <line x1="78" y1="54" x2="90" y2="54" stroke="#999" stroke-width="1"/>
+    <line x1="78" y1="57" x2="90" y2="57" stroke="#999" stroke-width="1"/>
+    <line x1="78" y1="60" x2="90" y2="60" stroke="#999" stroke-width="1"/>
+    <ellipse cx="28" cy="114" rx="14" ry="6" fill="#3a5fc4"/>
+    <ellipse cx="72" cy="114" rx="14" ry="6" fill="#3a5fc4"/>
+    <circle cx="50" cy="4" r="6" fill="#ffd700"/>
+  </svg>` },
+  { name:'まんまねー', sub:'プロフェッショナル理事長', desc:'スーツとネクタイで決まってる！自主管理のプロとして区分所有法も完璧に理解している。', bonus:'EXP獲得量+20%', stars:'★★★★★☆', expNext:3000, svg:`<svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="10,38 50,6 90,38" fill="#2244aa" stroke="#0d2a7a" stroke-width="2"/>
+    <rect x="14" y="36" width="72" height="78" rx="9" fill="#3355cc" stroke="#2244aa" stroke-width="2"/>
+    <rect x="22" y="42" width="22" height="22" rx="6" fill="white" stroke="#2244aa" stroke-width="1.5"/>
+    <rect x="56" y="42" width="22" height="22" rx="6" fill="white" stroke="#2244aa" stroke-width="1.5"/>
+    <circle cx="33" cy="53" r="8" fill="#111"/><circle cx="67" cy="53" r="8" fill="#111"/>
+    <circle cx="35" cy="50" r="3" fill="white"/><circle cx="69" cy="50" r="3" fill="white"/>
+    <ellipse cx="50" cy="68" rx="5" ry="3" fill="#e74" opacity=".8"/>
+    <path d="M 30 72 Q 50 83 70 72" stroke="#333" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <rect x="44" y="75" width="12" height="22" fill="#1a2a88"/>
+    <path d="M 44,75 L 50,82 L 56,75" fill="#cc2233"/>
+    <rect x="34" y="86" width="32" height="28" rx="4" fill="#2244aa"/>
+    <ellipse cx="26" cy="116" rx="14" ry="6" fill="#2244aa"/>
+    <ellipse cx="74" cy="116" rx="14" ry="6" fill="#2244aa"/>
+    <circle cx="50" cy="2" r="7" fill="#ffd700"/><circle cx="50" cy="2" r="3" fill="#fff8"/>
+  </svg>` },
+  { name:'まんマイスター', sub:'マンション管理士マスター', desc:'卒業帽と黄金の鍵！マンション管理のすべてを極めた真のマスター。試験合格も目前だ！', bonus:'全ステータス最大化！', stars:'★★★★★★', expNext:99999, svg:`<svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
+    <defs><radialGradient id="g1" cx="50%" cy="50%"><stop offset="0%" stop-color="#4466ff"/><stop offset="100%" stop-color="#1122aa"/></radialGradient></defs>
+    <polygon points="8,38 50,4 92,38" fill="url(#g1)" stroke="#0a1a66" stroke-width="2"/>
+    <rect x="12" y="36" width="76" height="82" rx="10" fill="#2244cc" stroke="#1133aa" stroke-width="2"/>
+    <rect x="20" y="42" width="24" height="24" rx="6" fill="#ffffee" stroke="#1133aa" stroke-width="1.5"/>
+    <rect x="56" y="42" width="24" height="24" rx="6" fill="#ffffee" stroke="#1133aa" stroke-width="1.5"/>
+    <circle cx="32" cy="54" r="9" fill="#0a0a2a"/><circle cx="68" cy="54" r="9" fill="#0a0a2a"/>
+    <circle cx="35" cy="51" r="4" fill="white"/><circle cx="71" cy="51" r="4" fill="white"/>
+    <path d="M 28 72 Q 50 85 72 72" stroke="#ffd700" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <ellipse cx="50" cy="67" rx="6" ry="4" fill="#ffd700" opacity=".7"/>
+    <rect x="44" y="77" width="12" height="25" fill="#112299"/>
+    <path d="M 44,77 L 50,85 L 56,77" fill="#cc2233"/>
+    <rect x="32" y="90" width="36" height="28" rx="4" fill="#1133aa"/>
+    <rect x="20" y="0" width="60" height="8" rx="3" fill="#1a1a1a"/>
+    <rect x="30" y="7" width="40" height="16" rx="3" fill="#ffd700"/>
+    <text x="50" y="19" text-anchor="middle" font-size="9" font-weight="bold" fill="#1a1a1a">MASTER</text>
+    <line x1="72" y1="82" x2="88" y2="92" stroke="#ffd700" stroke-width="2"/>
+    <ellipse cx="86" cy="94" rx="7" ry="5" fill="#ffd700" stroke="#cc9900" stroke-width="1.5"/>
+    <circle cx="86" cy="94" r="3" fill="#cc9900"/>
+    <ellipse cx="24" cy="118" rx="14" ry="6" fill="#1133aa"/>
+    <ellipse cx="76" cy="118" rx="14" ry="6" fill="#1133aa"/>
+    <circle cx="50" cy="0" r="0"/>
+    <!-- sparkles -->
+    <text x="6" y="45" font-size="12">✨</text>
+    <text x="80" y="40" font-size="12">✨</text>
+  </svg>` },
+];
+
+// ===========================
+// ENEMY DATA
+// ===========================
+const ENEMIES = {
+  kubunshoyu: { name:'法律ドラゴン🐉', color:'#ff6b6b', svg:`<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="50" cy="55" rx="30" ry="35" fill="#cc3333"/>
+    <polygon points="50,15 40,35 60,35" fill="#ff4444"/>
+    <polygon points="20,40 30,30 28,50" fill="#ff4444"/>
+    <polygon points="80,40 70,30 72,50" fill="#ff4444"/>
+    <circle cx="38" cy="45" r="8" fill="#ff9900"/><circle cx="62" cy="45" r="8" fill="#ff9900"/>
+    <circle cx="38" cy="45" r="4" fill="#111"/><circle cx="62" cy="45" r="4" fill="#111"/>
+    <circle cx="39" cy="43" r="1.5" fill="white"/><circle cx="63" cy="43" r="1.5" fill="white"/>
+    <path d="M 35 65 L 42 72 L 50 65 L 58 72 L 65 65" stroke="#ff4444" stroke-width="2" fill="none"/>
+    <rect x="40" y="75" width="20" height="12" rx="4" fill="#880000"/>
+    <text x="50" y="85" text-anchor="middle" font-size="8" fill="white" font-weight="bold">法</text>
+    <path d="M 20,55 Q 10,65 20,75 Q 30,85 25,90" stroke="#cc3333" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <path d="M 80,55 Q 90,65 80,75 Q 70,85 75,90" stroke="#cc3333" stroke-width="6" fill="none" stroke-linecap="round"/>
+  </svg>` },
+  kanrikikaku: { name:'ルール番人📜', color:'#ce93d8', svg:`<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect x="25" y="20" width="50" height="65" rx="6" fill="#7b2d8b" stroke="#9c4fbb" stroke-width="2"/>
+    <rect x="30" y="26" width="40" height="53" rx="4" fill="#9c4fbb"/>
+    <line x1="34" y1="36" x2="66" y2="36" stroke="white" stroke-width="1.5"/>
+    <line x1="34" y1="42" x2="66" y2="42" stroke="white" stroke-width="1.5"/>
+    <line x1="34" y1="48" x2="66" y2="48" stroke="white" stroke-width="1.5"/>
+    <line x1="34" y1="54" x2="56" y2="54" stroke="white" stroke-width="1.5"/>
+    <circle cx="40" cy="64" r="8" fill="#ffcc00"/><circle cx="60" cy="64" r="8" fill="#ffcc00"/>
+    <circle cx="40" cy="64" r="4" fill="#111"/><circle cx="60" cy="64" r="4" fill="#111"/>
+    <circle cx="41" cy="62" r="1.5" fill="white"/><circle cx="61" cy="62" r="1.5" fill="white"/>
+    <path d="M 37 76 Q 50 84 63 76" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <rect x="15" y="10" width="70" height="14" rx="5" fill="#5a1070" stroke="#9c4fbb" stroke-width="1.5"/>
+    <text x="50" y="21" text-anchor="middle" font-size="9" fill="#ffcc00" font-weight="bold">規約</text>
+  </svg>` },
+  tekisei: { name:'官僚モンスター🏛️', color:'#78909c', svg:`<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect x="30" y="30" width="40" height="55" rx="5" fill="#455a64" stroke="#607d8b" stroke-width="2"/>
+    <circle cx="35" cy="24" r="8" fill="#546e7a"/><circle cx="65" cy="24" r="8" fill="#546e7a"/>
+    <rect x="35" y="12" width="30" height="14" rx="4" fill="#37474f" stroke="#607d8b" stroke-width="1.5"/>
+    <text x="50" y="22" text-anchor="middle" font-size="8" fill="#90a4ae" font-weight="bold">国</text>
+    <rect x="36" y="38" width="12" height="12" rx="2" fill="#78909c"/><rect x="52" y="38" width="12" height="12" rx="2" fill="#78909c"/>
+    <circle cx="42" cy="44" r="4" fill="#111"/><circle cx="58" cy="44" r="4" fill="#111"/>
+    <circle cx="43" cy="42" r="1.5" fill="white"/><circle cx="59" cy="42" r="1.5" fill="white"/>
+    <rect x="36" y="56" width="28" height="16" rx="3" fill="#37474f"/>
+    <line x1="38" y1="60" x2="62" y2="60" stroke="#78909c" stroke-width="1"/><line x1="38" y1="64" x2="62" y2="64" stroke="#78909c" stroke-width="1"/>
+    <path d="M 38 78 Q 50 86 62 78" stroke="#90a4ae" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <rect x="38" y="82" width="24" height="3" fill="#607d8b"/>
+  </svg>` },
+  miho: { name:'天秤モンスター⚖️', color:'#ffb74d', svg:`<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="50" cy="60" rx="26" ry="30" fill="#e65100"/>
+    <circle cx="38" cy="52" r="7" fill="#ff8f00"/><circle cx="62" cy="52" r="7" fill="#ff8f00"/>
+    <circle cx="38" cy="52" r="4" fill="#111"/><circle cx="62" cy="52" r="4" fill="#111"/>
+    <circle cx="39" cy="50" r="1.5" fill="white"/><circle cx="63" cy="50" r="1.5" fill="white"/>
+    <path d="M 36 68 Q 50 76 64 68" stroke="#fff3" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <line x1="50" y1="15" x2="50" y2="42" stroke="#ffd700" stroke-width="2"/>
+    <line x1="28" y1="22" x2="72" y2="22" stroke="#ffd700" stroke-width="2"/>
+    <circle cx="28" cy="22" r="8" fill="#ffb300" stroke="#ffd700" stroke-width="1.5"/><text x="28" y="26" text-anchor="middle" font-size="8" fill="white" font-weight="bold">民</text>
+    <circle cx="72" cy="22" r="8" fill="#ffb300" stroke="#ffd700" stroke-width="1.5"/><text x="72" y="26" text-anchor="middle" font-size="8" fill="white" font-weight="bold">法</text>
+    <circle cx="50" cy="14" r="4" fill="#ffd700"/>
+  </svg>` },
+  kenchiku: { name:'ギアモンスター🔧', color:'#90caf9', svg:`<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="50" r="30" fill="#1565c0" stroke="#1976d2" stroke-width="2"/>
+    <circle cx="50" cy="50" r="18" fill="#0d47a1"/>
+    <!-- gear teeth -->
+    <rect x="46" y="18" width="8" height="10" rx="2" fill="#1976d2"/>
+    <rect x="46" y="72" width="8" height="10" rx="2" fill="#1976d2"/>
+    <rect x="18" y="46" width="10" height="8" rx="2" fill="#1976d2"/>
+    <rect x="72" y="46" width="10" height="8" rx="2" fill="#1976d2"/>
+    <rect x="25" y="25" width="7" height="10" rx="2" fill="#1976d2" transform="rotate(-45 28.5 30)"/>
+    <rect x="68" y="25" width="7" height="10" rx="2" fill="#1976d2" transform="rotate(45 71.5 30)"/>
+    <circle cx="38" cy="44" r="7" fill="#42a5f5"/><circle cx="62" cy="44" r="7" fill="#42a5f5"/>
+    <circle cx="38" cy="44" r="4" fill="#111"/><circle cx="62" cy="44" r="4" fill="#111"/>
+    <circle cx="39" cy="42" r="1.5" fill="white"/><circle cx="63" cy="42" r="1.5" fill="white"/>
+    <path d="M 36 58 Q 50 66 64 58" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <circle cx="50" cy="50" r="8" fill="#0d47a1" stroke="#42a5f5" stroke-width="1.5"/>
+    <circle cx="50" cy="50" r="3" fill="#42a5f5"/>
+  </svg>` },
+  kaikei: { name:'計算機モンスター💰', color:'#a5d6a7', svg:`<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect x="22" y="22" width="56" height="66" rx="8" fill="#1b5e20" stroke="#2e7d32" stroke-width="2"/>
+    <rect x="28" y="28" width="44" height="24" rx="4" fill="#33691e"/>
+    <text x="50" y="44" text-anchor="middle" font-size="16" fill="#a5d6a7" font-weight="bold">¥</text>
+    <rect x="28" y="58" width="12" height="10" rx="2" fill="#388e3c"/><rect x="44" y="58" width="12" height="10" rx="2" fill="#388e3c"/><rect x="60" y="58" width="12" height="10" rx="2" fill="#388e3c"/>
+    <rect x="28" y="72" width="12" height="10" rx="2" fill="#388e3c"/><rect x="44" y="72" width="12" height="10" rx="2" fill="#ff8f00"/><rect x="60" y="72" width="12" height="10" rx="2" fill="#388e3c"/>
+    <!-- eyes -->
+    <circle cx="37" cy="45" r="6" fill="#69f0ae"/><circle cx="63" cy="45" r="6" fill="#69f0ae"/>
+    <circle cx="37" cy="45" r="3" fill="#111"/><circle cx="63" cy="45" r="3" fill="#111"/>
+    <circle cx="38" cy="44" r="1" fill="white"/><circle cx="64" cy="44" r="1" fill="white"/>
+    <path d="M 35 55 Q 50 61 65 55" stroke="#a5d6a7" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </svg>` },
+  boss: { name:'マン管ラスボス👑', color:'#ffd700', svg:`<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <defs><radialGradient id="bg" cx="50%" cy="50%"><stop offset="0%" stop-color="#4a148c"/><stop offset="100%" stop-color="#1a0033"/></radialGradient></defs>
+    <ellipse cx="50" cy="55" rx="35" ry="40" fill="url(#bg)" stroke="#7b1fa2" stroke-width="2"/>
+    <polygon points="50,5 43,22 26,22 40,33 34,50 50,40 66,50 60,33 74,22 57,22" fill="#ffd700" stroke="#ff9900" stroke-width="1"/>
+    <circle cx="36" cy="48" r="10" fill="#9c27b0"/><circle cx="64" cy="48" r="10" fill="#9c27b0"/>
+    <circle cx="36" cy="48" r="6" fill="#111"/><circle cx="64" cy="48" r="6" fill="#111"/>
+    <circle cx="38" cy="45" r="2.5" fill="white"/><circle cx="66" cy="45" r="2.5" fill="white"/>
+    <ellipse cx="50" cy="65" rx="8" ry="5" fill="#6a1b9a" opacity=".8"/>
+    <path d="M 33 72 Q 50 83 67 72" stroke="#ffd700" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <text x="50" y="90" text-anchor="middle" font-size="8" fill="#ce93d8" font-weight="bold">全知全能</text>
+    <text x="10" y="45" font-size="14">✨</text><text x="76" y="40" font-size="14">✨</text>
+    <text x="6" y="68" font-size="12">⭐</text><text x="80" y="70" font-size="12">⭐</text>
+  </svg>` },
+  daily: { name:'まいにちモンスター🌟', color:'#ffeb3b', svg:`<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="50" r="36" fill="#f57f17" stroke="#f9a825" stroke-width="2"/>
+    <circle cx="50" cy="50" r="26" fill="#ffb300"/>
+    <!-- sun rays -->
+    <line x1="50" y1="10" x2="50" y2="18" stroke="#ffee58" stroke-width="4" stroke-linecap="round"/>
+    <line x1="50" y1="82" x2="50" y2="90" stroke="#ffee58" stroke-width="4" stroke-linecap="round"/>
+    <line x1="10" y1="50" x2="18" y2="50" stroke="#ffee58" stroke-width="4" stroke-linecap="round"/>
+    <line x1="82" y1="50" x2="90" y2="50" stroke="#ffee58" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="38" cy="44" r="7" fill="#fff9c4"/><circle cx="62" cy="44" r="7" fill="#fff9c4"/>
+    <circle cx="38" cy="44" r="4" fill="#111"/><circle cx="62" cy="44" r="4" fill="#111"/>
+    <circle cx="39" cy="42" r="1.5" fill="white"/><circle cx="63" cy="42" r="1.5" fill="white"/>
+    <path d="M 36 60 Q 50 70 64 60" stroke="#e65100" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  </svg>` },
+};
+
+// ===========================
+// QUESTION DATA
+// ===========================
+const QS = {
+  kubunshoyu:[
+    {q:'区分所有法上、集会の招集通知は会日より少なくとも何週間前に発しなければならないか（規約に別段の定めがない場合）？',opts:['1週間前','2週間前','3週間前','4週間前'],ans:0,exp:'<strong>区分所有法第35条第1項</strong>：少なくとも1週間前に発しなければならない。なお標準管理規約では2週間前とより厳しく規定。'},
+    {q:'共用部分の重大変更（形状・効用の著しい変更）に必要な決議要件は？',opts:['区分所有者及び議決権の各過半数','各3分の2以上','各4分の3以上','区分所有者全員の同意'],ans:2,exp:'<strong>区分所有法第17条第1項</strong>：共用部分の変更（著しい変更）は各4分の3以上。規約で区分所有者の定数を過半数まで減ずることが可能。'},
+    {q:'建替え決議に必要な決議要件は？',opts:['各3分の2以上','各4分の3以上','各5分の4以上','全員一致'],ans:2,exp:'<strong>区分所有法第62条第1項</strong>：建替え決議は区分所有者及び議決権の各5分の4以上の多数決議が必要。最も高い要件。'},
+    {q:'規約の設定・変更・廃止に必要な決議要件は？',opts:['各過半数','各3分の2以上','各4分の3以上','各5分の4以上'],ans:2,exp:'<strong>区分所有法第31条第1項</strong>：規約の設定・変更・廃止は区分所有者及び議決権の各4分の3以上の多数決議。'},
+    {q:'管理者は少なくとも毎年何回集会を招集しなければならないか？',opts:['1回','2回','3回','4回'],ans:0,exp:'<strong>区分所有法第34条第2項</strong>：管理者は少なくとも毎年1回集会を招集しなければならない。'},
+    {q:'専有部分の床面積の算定方法（区分所有法）は？',opts:['壁芯面積（壁の中心線）','内法面積（壁の内側線）','外壁外面線で囲まれた面積','壁芯面積から共用部分面積を控除'],ans:1,exp:'<strong>区分所有法第14条</strong>：専有部分の床面積は壁その他の区画の内側線（内法）で囲まれた部分の水平投影面積による。'},
+    {q:'区分所有者が敷地利用権を有する場合、専有部分と敷地利用権の分離処分は原則として？',opts:['自由にできる','規約で定めがなければできない','集会決議があればできる','原則としてできない'],ans:3,exp:'<strong>区分所有法第22条第1項</strong>：専有部分と敷地利用権は原則として分離処分できない。規約に別段の定めがある場合を除く。'},
+    {q:'管理組合法人の設立に必要な決議要件は？',opts:['各過半数','各3分の2以上','各4分の3以上','各5分の4以上'],ans:2,exp:'<strong>区分所有法第47条第1項</strong>：管理組合法人の設立は区分所有者及び議決権の各4分の3以上の多数決議で成立する。'},
+  ],
+  kanrikikaku:[
+    {q:'標準管理規約（単棟型）上、総会の「特別決議」に必要な要件は？',opts:['出席組合員の議決権の3分の2以上','組合員総数の過半数及び議決権総数の過半数','組合員総数の4分の3以上及び議決権総数の4分の3以上','組合員全員の同意'],ans:2,exp:'<strong>標準管理規約第47条第2項</strong>：特別決議事項は組合員総数の4分の3以上及び議決権総数の4分の3以上の決議が必要。'},
+    {q:'標準管理規約（単棟型）上、総会の招集通知は少なくとも何週間前に発しなければならないか？',opts:['1週間前','2週間前','3週間前','4週間前'],ans:1,exp:'<strong>標準管理規約第43条第1項</strong>：総会招集通知は少なくとも2週間前（区分所有法の1週間より長い）。緊急時は1週間に短縮可能。'},
+    {q:'標準管理規約（単棟型）上、役員（理事・監事）の任期は？',opts:['1年','2年','3年','4年'],ans:1,exp:'<strong>標準管理規約第36条第1項</strong>：役員の任期は2年。ただし規約で1年や3年に変更することも可能。'},
+    {q:'標準管理規約（単棟型）上、総会の議長は誰が務めるか？',opts:['出席組合員の互選','理事長','監事','理事の互選'],ans:1,exp:'<strong>標準管理規約第42条第5項</strong>：総会の議長は理事長が務める（区分所有法では管理者または招集した区分所有者の1人）。'},
+    {q:'標準管理規約において、修繕積立金を使用できない用途はどれか？',opts:['大規模修繕工事','経常的な共用部分の管理（管理費で賄うべきもの）','建物の一部が滅失した場合の復旧工事','マンション及び敷地に関する各種保険料'],ans:1,exp:'<strong>標準管理規約第28条</strong>：修繕積立金は大規模修繕・建替え等の特定費用に充当する。経常的な管理業務費は管理費から支出する。'},
+    {q:'標準管理規約（単棟型）上、理事会の決議は？',opts:['理事全員の同意が必要','理事の過半数が出席し出席理事の過半数で決する','理事の3分の2以上が出席し過半数で決する','組合員総数の過半数'],ans:1,exp:'<strong>標準管理規約第53条第1項</strong>：理事会の決議は理事の過半数が出席し、出席理事の過半数で決する（普通決議）。'},
+    {q:'標準管理規約（単棟型）上、理事長不在時に職務を代理する者は？',opts:['監事','年長の理事','副理事長','書記'],ans:2,exp:'<strong>標準管理規約第40条</strong>：理事長に事故があるときは副理事長が職務を代理する。副理事長が複数いる場合は理事長があらかじめ指定した者。'},
+    {q:'標準管理規約上、駐車場使用契約の当事者は？',opts:['区分所有者同士の直接契約','管理組合と使用する組合員の契約','区分所有者全員と使用者の契約','管理者と使用者の契約'],ans:1,exp:'<strong>標準管理規約第15条</strong>：駐車場は管理組合が管理し、使用希望者と管理組合が使用契約を締結する。使用料は管理組合に納入。'},
+  ],
+  tekisei:[
+    {q:'マンション管理士の登録は何年ごとに更新しなければならないか？',opts:['3年','5年','7年','10年'],ans:1,exp:'<strong>マンション管理適正化法第30条</strong>：マンション管理士の登録は5年ごとに更新が必要（法定講習の受講が条件）。'},
+    {q:'マンション管理業者の登録の有効期間は？',opts:['3年','5年','7年','更新不要'],ans:1,exp:'<strong>マンション管理適正化法第44条</strong>：マンション管理業者の登録有効期間は5年。更新を怠ると登録失効。'},
+    {q:'管理業務主任者が行う重要事項説明の対象は？',opts:['区分所有者全員','管理組合の理事長のみ','管理組合を代表する者（管理者等）','マンションの居住者全員'],ans:2,exp:'<strong>マンション管理適正化法第72条</strong>：重要事項の説明は管理組合を代表する者（管理者等）に対して、管理業務主任者が記名した書面を交付して行う。'},
+    {q:'管理委託契約における「管理業務主任者の設置」の基準は？',opts:['管理戸数10戸につき1人以上','管理戸数30戸につき1人以上','管理戸数50戸につき1人以上','1社に1人以上'],ans:1,exp:'<strong>マンション管理適正化法第56条</strong>：管理業者は事務所ごとに管理戸数30戸につき1人以上の成年者たる専任の管理業務主任者を置かなければならない。'},
+    {q:'マンション管理適正化法上のマンションの定義として正しいものは？',opts:['3階建て以上の共同住宅','5戸以上の区分所有建物','2以上の区分所有者が存する建物（階数・戸数制限なし）','100㎡以上の専有部分がある建物'],ans:2,exp:'<strong>マンション管理適正化法第2条第1号</strong>：マンションとは「二以上の区分所有者が存する建物で人の居住の用に供する専有部分のあるもの並びにその敷地及び附属施設」。階数・戸数制限なし。'},
+    {q:'マンション管理士は業務独占資格か名称独占資格か？',opts:['業務独占資格（有資格者しか業務ができない）','名称独占資格（有資格者しかその名称を使えない）','どちらでもない（任意資格）','公的資格ではない'],ans:1,exp:'<strong>マンション管理適正化法第33条</strong>：マンション管理士は名称独占資格。有資格者でない者が「マンション管理士」の名称を使用することは禁止されているが、業務自体を行うことは禁止されていない。'},
+    {q:'管理組合への重要事項説明はいつ行わなければならないか？',opts:['管理委託契約締結後遅滞なく','管理委託契約締結前（契約成立前）','管理委託契約締結と同時','毎年度末'],ans:1,exp:'<strong>マンション管理適正化法第72条</strong>：重要事項の説明は管理委託契約成立の前（締結前）に管理業務主任者が行わなければならない。'},
+    {q:'管理業者が管理費等の収納を行う場合の分別管理について正しいものは？',opts:['管理費と修繕積立金を同一口座で管理してよい','管理費と修繕積立金は別々の口座で管理しなければならない','管理業者の固有財産と一緒に管理してよい','現金で保管してよい'],ans:1,exp:'<strong>マンション管理適正化法第76条・施行規則第87条</strong>：管理業者は管理費と修繕積立金を管理組合等ごと、その種別ごとに分別して管理しなければならない。'},
+  ],
+  miho:[
+    {q:'民法上、債権の消滅時効の原則的な期間（2020年改正後）は？',opts:['権利行使できることを知った時から3年','権利行使できることを知った時から5年','権利が生じた時から5年','権利が生じた時から10年'],ans:1,exp:'<strong>改正民法第166条第1項第1号</strong>（2020年4月施行）：主観的起算点（権利を行使できることを知った時）から5年、客観的起算点（権利行使できる時）から10年のいずれか早い方。'},
+    {q:'不法行為による損害賠償請求権の消滅時効は？',opts:['損害及び加害者を知った時から1年','損害及び加害者を知った時から3年','不法行為時から5年','不法行為時から10年'],ans:1,exp:'<strong>民法第724条第1号</strong>：不法行為による損害賠償請求権は、被害者が損害及び加害者を知った時から3年で消滅（生命・身体侵害は5年）。'},
+    {q:'留置権の成立要件として正しいものは？',opts:['占有している他人の物について生じた債権を有すること','他人の動産のみ対象','債権者と債務者の合意が必要','占有取得が自己のためでなければならない'],ans:0,exp:'<strong>民法第295条</strong>：留置権は①他人の物を占有し②その物に関して生じた債権を有する場合に成立する。不動産も対象。合意不要で法律上当然に発生。'},
+    {q:'不当利得返還請求権の成立要件に含まれないものは？',opts:['他人の財産または労務によって利益を得たこと','損失者に損害が生じていること','受益者の故意・過失','法律上の原因がないこと'],ans:2,exp:'<strong>民法第703条</strong>：不当利得の要件は①法律上の原因なく②他人の財産等から利益を受け③その者に損失を与えること。受益者の故意・過失は要件ではない。'},
+    {q:'相殺が認められるための要件として誤っているものは？',opts:['双方が互いに同種の債務を負担していること','自動債権が弁済期にあること','受動債権が弁済期にあること（相手の同意があれば不要）','双方の債権が有効に成立していること'],ans:2,exp:'<strong>民法第505条</strong>：相殺は自動債権（相殺する側の債権）が弁済期にあれば足りる。受動債権（相殺される側）は弁済期前でも相殺可能（期限の利益の放棄と同様に扱われる）。'},
+    {q:'賃貸借契約において、賃貸人たる地位が移転（建物売却等）した場合の敷金の扱いは？',opts:['前の賃貸人（旧オーナー）が返還義務を負い続ける','新賃貸人（新オーナー）に敷金返還義務が承継される','敷金返還義務は消滅する','賃借人が再度敷金を差し入れる義務がある'],ans:1,exp:'<strong>民法第605条の2第4項</strong>：賃貸人たる地位が移転した場合、敷金の返還義務も新賃貸人に承継される。'},
+    {q:'管理組合が滞納管理費の回収に使える「先取特権」の性質は？',opts:['担保物権であり特定の不動産のみに及ぶ','動産のみに及ぶ一般先取特権','共益費用の先取特権として一般先取特権の中で最優先','抵当権と同一順位'],ans:2,exp:'<strong>民法第306条第1号・307条</strong>：管理費等は共益費用として一般先取特権の中で最優先の順位。ただし特別先取特権（不動産売買の先取特権など）や抵当権には劣後する場合がある。'},
+    {q:'区分所有者が死亡し相続人が存在しない場合、専有部分の帰属は？',opts:['管理組合に帰属する','同居していた者に帰属する','国庫に帰属する（国に帰属する）','区分所有者全員に帰属する'],ans:2,exp:'<strong>民法第959条</strong>：相続人がいない場合、相続財産は最終的に国庫に帰属する（内縁の配偶者等への特別縁故者への分与が認められる場合を除く）。'},
+  ],
+  kenchiku:[
+    {q:'建築基準法上、共同住宅を建築できない用途地域はどれか？',opts:['第一種低層住居専用地域','第一種中高層住居専用地域','工業地域','工業専用地域'],ans:3,exp:'<strong>建築基準法別表第2</strong>：共同住宅は工業専用地域には建築できない。工業地域には可能（ただし小学校・中学校・高等学校は不可）。'},
+    {q:'マンションの大規模修繕計画において、一般的に設定される計画期間の目安は？',opts:['10年以上','25年以上','40年以上','60年以上'],ans:1,exp:'<strong>長期修繕計画作成ガイドライン（国交省）</strong>：長期修繕計画の計画期間は25年以上が適切とされている。大規模修繕工事の周期（12〜15年）を2回以上含む期間。'},
+    {q:'建築物の延べ面積に算入されないものはどれか？',opts:['廊下','階段室','昇降機の昇降路の部分','共用玄関'],ans:2,exp:'<strong>建築基準法施行令第2条第1項第4号</strong>：昇降機の昇降路（エレベーターシャフト）は延べ面積に算入しない。'},
+    {q:'消防法上、11階以上の共同住宅に設置が義務づけられている消防設備はどれか？',opts:['屋内消火栓設備のみ','自動火災報知設備のみ','スプリンクラー設備','連結送水管'],ans:2,exp:'<strong>消防法施行令第12条</strong>：11階以上の共同住宅にはスプリンクラー設備の設置が義務づけられている（一定の免除要件あり）。'},
+    {q:'給水設備の受水槽方式と直結給水方式の比較として正しいものは？',opts:['直結給水は停電時でも給水可能','受水槽方式は定期的な清掃・点検が不要','直結給水は受水槽による水質汚染リスクがない','受水槽方式は水圧の心配がない'],ans:2,exp:'直結給水方式は水道本管から直接給水するため受水槽がなく、受水槽由来の水質汚染（レジオネラ菌等）のリスクがない。ただし断水時の備蓄ができない。'},
+    {q:'耐震改修促進法において「要緊急安全確認大規模建築物」として指定される共同住宅の規模は？',opts:['3階以上かつ床面積1,000㎡以上','5階以上かつ床面積1,000㎡以上','3階以上かつ床面積5,000㎡以上','5階以上かつ床面積10,000㎡以上'],ans:1,exp:'<strong>耐震改修促進法施行令第4条</strong>：5階以上かつ床面積が1,000㎡以上の要緊急安全確認大規模建築物（共同住宅）は耐震診断の実施と結果公表が義務。'},
+    {q:'バリアフリー法（高齢者・障害者等の移動等の円滑化の促進に関する法律）の特別特定建築物（共同住宅）に義務づけられる規模の基準は？',opts:['床面積500㎡以上','床面積1,000㎡以上','床面積2,000㎡以上','床面積5,000㎡以上'],ans:2,exp:'<strong>バリアフリー法第14条・同施行令第9条</strong>：共同住宅の特別特定建築物は床面積の合計が2,000㎡以上のものが建築物移動等円滑化義務の対象。'},
+    {q:'鉄筋コンクリート造（RC造）の大規模修繕で最も重要な工事の一つ「外壁改修」の主な目的は？',opts:['断熱性能の向上のみ','コンクリートの中性化抑制と防水性の確保','電気設備の更新','排水管の交換'],ans:1,exp:'RC造外壁の主要な劣化は①コンクリートの中性化（炭酸化による鉄筋の腐食）②ひび割れ・浮き・剥落③防水性能の低下。外壁改修はこれらを修繕し建物の耐久性を回復させる。'},
+  ],
+  kaikei:[
+    {q:'管理費と修繕積立金の基本的な区別として正しいものは？',opts:['管理費は将来の大規模修繕に備える積立金','修繕積立金は日常的な管理業務に使用する','管理費は経常的な管理業務に使用し、修繕積立金は将来の修繕等に備える','両方とも同じ目的に使用できる'],ans:2,exp:'<strong>標準管理規約第27条・28条</strong>：管理費は共用部分の維持管理等の経常的業務に使用。修繕積立金は将来の大規模修繕・建替え等に備えて積み立てる。両者は厳格に区別する。'},
+    {q:'管理組合の収支計算書に記載されるものは？',opts:['資産と負債の残高','当期の収入と支出の実績','組合員の持分割合','将来の修繕費用見積もり'],ans:1,exp:'収支計算書（収支報告書）は当期の収入・支出の実績を示すもの。資産・負債の残高は貸借対照表（バランスシート）に記載される。'},
+    {q:'管理組合の貸借対照表において「負債」に計上されるものは？',opts:['修繕積立金累計','前払管理費','未払金（翌月支払予定の費用）','現金預金'],ans:2,exp:'未払金は費用が発生しているが未だ支払っていないため負債。修繕積立金は区分所有者からの預かり金として負債（または資本の部）に計上する会計処理もある。現金・前払いは資産。'},
+    {q:'区分所有者から徴収する管理費・修繕積立金の消費税上の取り扱いは？',opts:['課税売上として消費税を徴収する','不課税（対価性がないため消費税の対象外）','非課税売上となる','輸出免税となる'],ans:1,exp:'管理組合が区分所有者から徴収する管理費・修繕積立金は「対価性がない」と解釈され不課税（消費税の課税対象外）。ただし駐車場使用料等は課税売上となる場合がある。'},
+    {q:'管理組合が消費税の課税事業者となる基準は？',opts:['課税売上高が年間500万円超','課税売上高が年間1,000万円超','収入合計が年間1,000万円超','組合員数が100人超'],ans:1,exp:'<strong>消費税法第9条</strong>：基準期間（前々事業年度）の課税売上高が1,000万円を超える場合、消費税の課税事業者となる。管理組合の課税売上（駐車場等）が1,000万円を超えるケースは少ない。'},
+    {q:'修繕積立金の管理方法として最も適切なものは？',opts:['管理費と同一口座で管理する','管理業者の固有財産と合算して管理する','管理費と分別し独立した口座で保管する','現金で金庫に保管する'],ans:2,exp:'<strong>標準管理規約第61条・マンション管理適正化指針</strong>：修繕積立金は管理費と分別して独立した口座で保管することが求められる。管理業者に管理を委託する場合も同様。'},
+    {q:'管理組合の予算執行における「流用」について正しいものは？',opts:['款・項・目の間の流用は自由に行える','款（大区分）間の流用には原則として総会決議が必要','理事会の承認だけで款間の流用ができる','予算外支出はいかなる場合も認められない'],ans:1,exp:'予算の款（大区分：管理費会計・修繕積立金会計など）間の流用は原則として総会決議が必要。項（中区分）間の流用は理事会承認で可能とする場合も多い。'},
+    {q:'管理組合の会計で採用されることが多い会計方式は？',opts:['発生主義（費用・収益の発生時点で計上）','現金主義（現金の入出時点で計上）','取得原価主義のみ','時価主義のみ'],ans:1,exp:'多くの管理組合（特に小規模）では現金主義（収支計算書方式）が採用されている。小林税理士が示した「支払いベース」もこれに対応。ただし大規模管理組合では発生主義を採用するケースも増えている。'},
+  ],
+};
+
+// Boss/Daily use mixed questions
+QS.boss = [...QS.kubunshoyu,...QS.kanrikikaku,...QS.tekisei,...QS.miho,...QS.kenchiku,...QS.kaikei];
+QS.daily = [...QS.boss];
+
+// Shuffle array
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+// ===========================
+// GAME STATE
+// ===========================
+const DEFAULT_STATE = {
+  stage:0, exp:0, hp:100, maxHp:100,
+  mood:100, lastStudied:0, streak:0, lastStudyDate:'',
+  totalAnswered:0, totalCorrect:0,
+  petCount:0, cheerUsed:false, petDate:'',
+  studyDays:0, lastSaveDate:'',
+  dailyCount:0, dailyDate:'',
+};
+
+let G = loadState();
+let currentQuest = null;
+let battleState = {};
+
+function loadState(){
+  try{
+    const s = localStorage.getItem('mankanQuest');
+    if(s) return {...DEFAULT_STATE,...JSON.parse(s)};
+  }catch(e){}
+  return {...DEFAULT_STATE};
+}
+function saveState(){ localStorage.setItem('mankanQuest',JSON.stringify(G)); }
+
+// ===========================
+// SCREEN MANAGEMENT
+// ===========================
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(id==='home') document.querySelectorAll('.nav-item')[0].classList.add('active');
+  if(id==='care'){ document.querySelectorAll('.nav-item')[1].classList.add('active'); updateCareScreen(); }
+  if(id==='home') updateHomeScreen();
+  window.scrollTo(0,0);
+}
+
+// ===========================
+// HOME SCREEN
+// ===========================
+function updateHomeScreen(){
+  const s = STAGES[G.stage];
+  document.getElementById('charName').textContent = s.name;
+  document.getElementById('charSub').textContent = s.sub;
+  document.getElementById('lvBadge').textContent = `Lv.${getLevel()}`;
+  document.getElementById('stageStars').textContent = s.stars;
+  document.getElementById('homeChar').innerHTML = s.svg;
+
+  // EXP bar
+  const expPrev = G.stage>0 ? getExpThreshold(G.stage-1) : 0;
+  const expNext = getExpThreshold(G.stage);
+  const pct = expNext < 99999 ? Math.min(100,((G.exp - expPrev)/(expNext-expPrev))*100) : 100;
+  document.getElementById('expBar').style.width = pct+'%';
+  document.getElementById('expLabel').textContent = `${G.exp} / ${expNext<99999?expNext:'MAX'}`;
+
+  // Mood
+  checkDailyReset();
+  const mood = getMood();
+  document.getElementById('moodIcon').textContent = mood.icon;
+  document.getElementById('moodVal').textContent = mood.label;
+  document.getElementById('streakVal').textContent = G.streak+'日';
+  const acc = G.totalAnswered>0 ? Math.round(G.totalCorrect/G.totalAnswered*100)+'%' : '－';
+  document.getElementById('accuracyVal').textContent = acc;
+
+  const today = getTodayStr();
+  const dailyDone = G.dailyDate === today;
+  document.getElementById('dailyProg').textContent = `${G.dailyCount}/10問`;
+  document.getElementById('dailyBadge').textContent = dailyDone ? '✅' : '▶';
+
+  const hours = (Date.now() - G.lastStudied) / 3600000;
+  if(hours < 2) document.getElementById('streakInfo').textContent = '🔥 今日の学習バッチリ！';
+  else if(hours < 24) document.getElementById('streakInfo').textContent = '📚 また問いてみよう！';
+  else document.getElementById('streakInfo').textContent = '😴 ちょっとサボりすぎ…！';
+}
+
+function getExpThreshold(stage){
+  return STAGES[stage].expNext;
+}
+
+function getLevel(){
+  return Math.floor(G.exp / 50) + 1;
+}
+
+function getMood(){
+  const hours = (Date.now() - G.lastStudied) / 3600000;
+  if(G.lastStudied === 0) return {icon:'😴',label:'ねむい…'};
+  if(hours < 2) return {icon:'😊',label:'ハッピー！'};
+  if(hours < 24) return {icon:'🙂',label:'ふつう'};
+  if(hours < 48) return {icon:'😐',label:'さびしい'};
+  return {icon:'😢',label:'かなしい'};
+}
+
+function getTodayStr(){
+  return new Date().toISOString().slice(0,10);
+}
+
+function checkDailyReset(){
+  const today = getTodayStr();
+  if(G.lastSaveDate && G.lastSaveDate !== today){
+    // new day
+    G.petCount=0; G.cheerUsed=false; G.petDate='';
+    if(G.lastStudyDate === G.lastSaveDate) G.streak++;
+    else if(G.lastSaveDate && G.lastStudyDate !== G.lastSaveDate) G.streak=0;
+  }
+  G.lastSaveDate = today;
+  saveState();
+}
+
+// ===========================
+// QUEST / BATTLE
+// ===========================
+const CAT_NAMES = {
+  kubunshoyu:'区分所有法', kanrikikaku:'標準管理規約',
+  tekisei:'管理適正化法', miho:'民法',
+  kenchiku:'建築・設備', kaikei:'会計・財務',
+  daily:'デイリークエスト', boss:'ボスバトル',
+};
+
+function startQuest(cat){
+  currentQuest = cat;
+  let qs = QS[cat] ? [...QS[cat]] : [];
+  let count = cat==='daily' ? 10 : cat==='boss' ? 20 : qs.length;
+  battleState = {
+    cat, questions: shuffle(qs).slice(0,count),
+    idx:0, correct:0, maxCombo:0, combo:0,
+    expGained:0, enemyHp:100, playerHp:G.hp,
+  };
+  const enemy = ENEMIES[cat] || ENEMIES.daily;
+  document.getElementById('battleCatLabel').textContent = CAT_NAMES[cat]||cat;
+  document.getElementById('enemySvg').innerHTML = enemy.svg;
+  document.getElementById('enemyName').textContent = enemy.name;
+  document.getElementById('playerSvgB').innerHTML = STAGES[G.stage].svg;
+  document.getElementById('playerNameB').textContent = STAGES[G.stage].name;
+  showScreen('battle');
+  renderQuestion();
+}
+
+function retryQuest(){ startQuest(currentQuest); }
+
+function renderQuestion(){
+  const bs = battleState;
+  if(bs.idx >= bs.questions.length){ endBattle(); return; }
+  const q = bs.questions[bs.idx];
+  document.getElementById('battleQCount').textContent = `${bs.idx+1} / ${bs.questions.length}`;
+  document.getElementById('qBox').textContent = q.q;
+  document.getElementById('battleMsg').textContent = '';
+  document.getElementById('battleMsg').className = 'battle-msg';
+  document.getElementById('explain').className = 'explain';
+  document.getElementById('explain').innerHTML = '';
+  document.getElementById('nextBtn').className = 'next-btn';
+
+  // Update HP bars
+  updateBattleHp();
+
+  const choicesEl = document.getElementById('choices');
+  choicesEl.innerHTML = '';
+  q.opts.forEach((opt,i)=>{
+    const btn = document.createElement('button');
+    btn.className='choice';
+    btn.textContent = ['Ａ','Ｂ','Ｃ','Ｄ'][i]+'．'+opt;
+    btn.onclick=()=>answerQ(i);
+    choicesEl.appendChild(btn);
+  });
+}
+
+function updateBattleHp(){
+  const bs=battleState;
+  const ep=Math.max(0,bs.enemyHp);
+  const pp=Math.max(0,bs.playerHp);
+  document.getElementById('enemyHpBar').style.width=ep+'%';
+  document.getElementById('enemyHpLabel').textContent=`${ep}/100`;
+  document.getElementById('playerHpBar').style.width=pp+'%';
+  document.getElementById('playerHpLabel').textContent=`${pp}/100`;
+  // color
+  const epBar=document.getElementById('enemyHpBar');
+  epBar.className='bar-fill '+(ep>60?'hp-high':ep>30?'hp-mid':'hp-low');
+  const ppBar=document.getElementById('playerHpBar');
+  ppBar.className='bar-fill '+(pp>60?'hp-high':pp>30?'hp-mid':'hp-low');
+}
+
+function answerQ(chosen){
+  const bs=battleState;
+  const q=bs.questions[bs.idx];
+  const correct=chosen===q.ans;
+
+  // Disable all choices
+  document.querySelectorAll('.choice').forEach((btn,i)=>{
+    btn.classList.add('disabled');
+    if(i===q.ans) btn.classList.add('correct');
+    else if(i===chosen && !correct) btn.classList.add('wrong');
+    else if(i===chosen && correct) btn.classList.add('correct');
+  });
+
+  // Update stats
+  G.totalAnswered++;
+  if(correct){
+    G.totalCorrect++;
+    bs.correct++;
+    bs.combo++;
+    if(bs.combo>bs.maxCombo) bs.maxCombo=bs.combo;
+    const comboBonus=Math.floor(bs.combo/3)*5;
+    const expGain=10+comboBonus;
+    bs.expGained+=expGain;
+    bs.enemyHp-=20;
+    const msgEl=document.getElementById('battleMsg');
+    msgEl.textContent=bs.combo>=3?`🔥 ${bs.combo}コンボ！ +${expGain} EXP 攻撃！`:`⚔️ こうかばつぐん！ +${expGain} EXP`;
+    msgEl.className='battle-msg msg-hit';
+    spawnParticles(['⭐','💥','✨']);
+    document.getElementById('playerSvgB').parentElement?.classList.remove('bounce-anim');
+    void document.getElementById('playerSvgB').offsetWidth;
+    // bounce animation
+    const pw=document.getElementById('playerSvgB');
+    pw.style.animation='none';
+    pw.offsetHeight;
+    pw.style.animation='';
+    pw.classList.remove('bounce-anim');
+    pw.offsetHeight;
+    pw.classList.add('bounce-anim');
+  } else {
+    bs.combo=0;
+    bs.playerHp-=15;
+    const msgEl=document.getElementById('battleMsg');
+    msgEl.textContent='💢 やられた！HP -15';
+    msgEl.className='battle-msg msg-miss';
+    document.getElementById('enemySvg').classList.add('hit-flash');
+    setTimeout(()=>document.getElementById('enemySvg').classList.remove('hit-flash'),300);
+  }
+
+  // Show explanation
+  const exp=document.getElementById('explain');
+  exp.innerHTML=q.exp;
+  exp.className='explain show';
+
+  // Show next button
+  document.getElementById('nextBtn').className='next-btn show';
+  document.getElementById('nextBtn').textContent=bs.idx+1>=bs.questions.length?'けっかを見る ▶':'つぎへ ▶';
+
+  updateBattleHp();
+  saveState();
+}
+
+function nextQuestion(){
+  battleState.idx++;
+  renderQuestion();
+}
+
+function endBattle(){
+  const bs=battleState;
+  const total=bs.questions.length;
+  const correct=bs.correct;
+  const pct=Math.round(correct/total*100);
+
+  // Add EXP
+  const oldStage=G.stage;
+  G.exp+=bs.expGained;
+  G.hp=Math.min(G.maxHp, bs.playerHp+20); // recover some HP after battle
+  G.lastStudied=Date.now();
+  G.lastStudyDate=getTodayStr();
+
+  // Daily quest tracking
+  G.dailyCount=(G.dailyCount||0)+correct;
+  G.dailyDate=getTodayStr();
+
+  // Study days
+  if(!G.lastStudyDate || G.lastStudyDate!==getTodayStr()){
+    G.studyDays=(G.studyDays||0)+1;
+  }
+
+  // Check evolution
+  const newStage=getStageFromExp(G.exp);
+  if(newStage>oldStage && newStage<STAGES.length){
+    G.stage=newStage;
+    saveState();
+    showEvolution(oldStage,newStage);
+    // Set result for after evolution
+    window._pendingResult={correct,total,pct,expGained:bs.expGained,combo:bs.maxCombo};
+    return;
+  }
+
+  saveState();
+  showResult(correct,total,pct,bs.expGained,bs.maxCombo);
+}
+
+function getStageFromExp(exp){
+  let s=0;
+  let cumExp=0;
+  for(let i=0;i<STAGES.length;i++){
+    if(exp>=cumExp && (i===STAGES.length-1 || exp<STAGES[i].expNext)) return i;
+    cumExp=STAGES[i].expNext;
+  }
+  return STAGES.length-1;
+}
+
+function showResult(correct,total,pct,expGained,combo){
+  document.getElementById('resultChar').innerHTML=STAGES[G.stage].svg;
+  const titles=['もうすこし！','がんばった！','よくできました！','すごい！','パーフェクト！'];
+  const subs=['また挑戦しよう','少しずつ上達中','合格圏内に近づいてきた！','本番もいけそう！','マスター級の実力！'];
+  const stars=['⭐☆☆','⭐⭐☆','⭐⭐⭐','⭐⭐⭐','⭐⭐⭐✨'];
+  const idx=pct<40?0:pct<60?1:pct<80?2:pct<100?3:4;
+  document.getElementById('resultTitle').textContent=titles[idx];
+  document.getElementById('resultSub').textContent=subs[idx];
+  document.getElementById('resultStars').textContent=stars[idx];
+  document.getElementById('resCorrect').textContent=`${correct} / ${total}問 (${pct}%)`;
+  document.getElementById('resExp').textContent=`+${expGained} EXP`;
+  document.getElementById('resCombo').textContent=`最大 ${combo}コンボ`;
+  const acc=G.totalAnswered>0?Math.round(G.totalCorrect/G.totalAnswered*100)+'%':'－';
+  document.getElementById('resAcc').textContent=acc;
+  showScreen('result');
+}
+
+// ===========================
+// EVOLUTION
+// ===========================
+function showEvolution(oldStage,newStage){
+  const s=STAGES[newStage];
+  document.getElementById('evoChar').innerHTML=s.svg;
+  document.getElementById('evoName').textContent=s.name;
+  document.getElementById('evoDesc').textContent=s.desc;
+  document.getElementById('evoBonus').textContent='✨ '+s.bonus;
+  showScreen('evolution');
+  // spawn a lot of particles
+  for(let i=0;i<20;i++) setTimeout(()=>spawnParticles(['🎉','⭐','✨','💫','🌟']),i*100);
+}
+
+function afterEvolution(){
+  const r=window._pendingResult;
+  if(r){ showResult(r.correct,r.total,r.pct,r.expGained,r.combo); window._pendingResult=null; }
+  else showScreen('home');
+}
+
+// ===========================
+// CARE SCREEN
+// ===========================
+function updateCareScreen(){
+  document.getElementById('careChar').innerHTML=STAGES[G.stage].svg;
+  const mood=getMood();
+  const speeches={
+    'ハッピー！':['きょうもいっしょにがんばろうね！','べんきょうたのしいね〜！','マン管しけん、ぜったいうかるよ！'],
+    'ふつう':['そろそろべんきょうしない？','ちょっとヒマになってきたよ〜','クエストがまってるよ！'],
+    'さびしい':['さびしいな…たまには会いにきてね','べんきょういつするの？','ぼく、まってたよ…'],
+    'かなしい':['ごほうびのべんきょうはまだかな…','わすれちゃったの…？','11月にしけんあるよ！！'],
+    'ねむい…':['はじめまして！いっしょにがんばろう','まずはクエストからはじめよう！'],
+  };
+  const arr=speeches[mood.label]||speeches['ふつう'];
+  document.getElementById('speechBubble').textContent=arr[Math.floor(Math.random()*arr.length)];
+
+  document.getElementById('statTotal').textContent=G.totalAnswered;
+  document.getElementById('statCorrect').textContent=G.totalCorrect;
+  document.getElementById('statStreak').textContent=G.streak+'日';
+  document.getElementById('statExp').textContent=G.exp;
+  document.getElementById('statStage').textContent=G.stage;
+  document.getElementById('statDays').textContent=G.studyDays||0;
+}
+
+function careAction(type){
+  if(type==='study'){ showScreen('home'); }
+  else if(type==='pet'){
+    const today=getTodayStr();
+    const count=(G.petDate===today?G.petCount:0);
+    if(count>=3){ showToast('今日はもう3回なでたよ！また明日ね 🥰'); return; }
+    G.petCount=(G.petDate===today?G.petCount:0)+1;
+    G.petDate=today;
+    G.exp+=2;
+    saveState();
+    spawnParticles(['💕','💝','✨']);
+    showToast('なでなで〜！きもちが上がった！+2 EXP 💕');
+    updateCareScreen();
+  } else if(type==='cheer'){
+    if(G.cheerUsed){ showToast('今日はもうはげましたよ！また明日ね 🎵'); return; }
+    G.cheerUsed=true;
+    G.hp=Math.min(G.maxHp,G.hp+30);
+    G.exp+=5;
+    saveState();
+    spawnParticles(['🎵','🎶','🌟']);
+    showToast('げんきでた！HP+30 🎵 +5 EXP');
+    updateCareScreen();
+  } else if(type==='status'){
+    const s=STAGES[G.stage];
+    const next=STAGES[Math.min(G.stage+1,STAGES.length-1)];
+    const toNext=G.stage<STAGES.length-1?STAGES[G.stage].expNext-G.exp:0;
+    alert(`【${s.name} の成長記録】\n\nLv.${getLevel()} / 総EXP: ${G.exp}\n${G.stage<STAGES.length-1?'次の進化まで: '+toNext+' EXP':'最高形態！'}\n正答率: ${G.totalAnswered>0?Math.round(G.totalCorrect/G.totalAnswered*100):'0'}%\n連続日数: ${G.streak}日\n総回答数: ${G.totalAnswered}問`);
+  }
+}
+
+// ===========================
+// ACHIEVEMENTS (simple)
+// ===========================
+function showAchieve(){
+  const items=[
+    {label:'初回解答',done:G.totalAnswered>0,icon:'🎯'},
+    {label:'10問正解',done:G.totalCorrect>=10,icon:'⭐'},
+    {label:'100問回答',done:G.totalAnswered>=100,icon:'📚'},
+    {label:'3日連続',done:G.streak>=3,icon:'🔥'},
+    {label:'7日連続',done:G.streak>=7,icon:'🌟'},
+    {label:'正答率80%以上',done:G.totalAnswered>0&&G.totalCorrect/G.totalAnswered>=0.8,icon:'🏆'},
+    {label:'進化1回',done:G.stage>=1,icon:'🐣'},
+    {label:'進化3回以上',done:G.stage>=3,icon:'🌈'},
+    {label:'マスター到達',done:G.stage>=5,icon:'👑'},
+  ];
+  const unlocked=items.filter(x=>x.done).map(x=>x.icon+' '+x.label).join('\n');
+  const locked=items.filter(x=>!x.done).map(x=>'🔒 '+x.label).join('\n');
+  alert(`🏅 実績\n\n【達成済み】\n${unlocked||'まだなし'}\n\n【未達成】\n${locked}`);
+}
+
+// ===========================
+// UTILITIES
+// ===========================
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+function spawnParticles(emojis){
+  for(let i=0;i<3;i++){
+    const p=document.createElement('div');
+    p.className='particle';
+    p.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+    p.style.left=(20+Math.random()*60)+'vw';
+    p.style.top=(30+Math.random()*40)+'vh';
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),1000);
+  }
+}
+
+// ===========================
+// INIT
+// ===========================
+checkDailyReset();
+updateHomeScreen();
+</script>
+</body>
+</html>
