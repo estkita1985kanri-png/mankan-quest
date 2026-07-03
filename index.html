@@ -761,9 +761,13 @@ function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  if(id==='home') document.querySelectorAll('.nav-item')[0].classList.add('active');
+  if(id==='home'){
+    document.querySelectorAll('.nav-item')[0].classList.add('active');
+    updateHomeScreen();
+    stopBGM();
+  }
   if(id==='care'){ document.querySelectorAll('.nav-item')[1].classList.add('active'); updateCareScreen(); }
-  if(id==='home') updateHomeScreen();
+  if(id==='battle') initAudio();
   window.scrollTo(0,0);
 }
 
