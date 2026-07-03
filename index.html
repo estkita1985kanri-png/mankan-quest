@@ -962,6 +962,7 @@ function answerQ(chosen){
     const msgEl=document.getElementById('battleMsg');
     msgEl.textContent='💢 やられた！HP -15';
     msgEl.className='battle-msg msg-miss';
+    playWrong();
     document.getElementById('enemySvg').classList.add('hit-flash');
     setTimeout(()=>document.getElementById('enemySvg').classList.remove('hit-flash'),300);
   }
