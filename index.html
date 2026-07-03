@@ -944,6 +944,7 @@ function answerQ(chosen){
     const msgEl=document.getElementById('battleMsg');
     msgEl.textContent=bs.combo>=3?`🔥 ${bs.combo}コンボ！ +${expGain} EXP 攻撃！`:`⚔️ こうかばつぐん！ +${expGain} EXP`;
     msgEl.className='battle-msg msg-hit';
+    playCorrect();
     spawnParticles(['⭐','💥','✨']);
     document.getElementById('playerSvgB').parentElement?.classList.remove('bounce-anim');
     void document.getElementById('playerSvgB').offsetWidth;
