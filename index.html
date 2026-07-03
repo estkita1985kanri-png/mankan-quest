@@ -1146,6 +1146,14 @@ function showAchieve(){
 // ===========================
 // UTILITIES
 // ===========================
+function toggleSound(){
+  soundEnabled = !soundEnabled;
+  G.soundEnabled = soundEnabled;
+  saveState();
+  document.getElementById('soundIcon').textContent = soundEnabled ? '🔊' : '🔇';
+  showToast(soundEnabled ? '音声をオン 🔊' : '音声をオフ 🔇');
+}
+
 function showToast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg;
